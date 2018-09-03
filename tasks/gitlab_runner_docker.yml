@@ -1,6 +1,20 @@
 - set_fact:
     runner_config: "{{ default_runner_config|combine(item) }}"
 
+- name: Ensure all pre-existing runner containers stopped 
+  shell: docker stop "gitlab-runner-{{ runner_config.RUNNER_NAME }}"
+  register: container_stop_status
+  become: True
+  failed_when: false
+  changed_when: false
+
+- name: Ensure all pre-existing runner containers purged
+  shell: docker rm "gitlab-runner-{{ runner_config.RUNNER_NAME }}"
+  register: container_rm_status
+  become: True
+  failed_when: false
+  changed_when: false
+
 - name: get gitlab-runner-{{ runner_config.RUNNER_NAME }} run status
   shell: docker ps | grep -w "gitlab-runner-{{ runner_config.RUNNER_NAME }}"
   register: container_run_status

@@ -50,6 +50,27 @@
     - sysstat
     - iptables-services
   become: True
+  when:
+    - runner_deployment_type == 'rpm'
+
+- name: install apt packages
+  apt:
+    state: installed
+    name:
+    - dstat
+    - lsof
+    - bash-completion
+    - time
+    - tmux
+    - git
+    - python-dev
+    - libssl-dev
+    - python-pip
+    - sysstat
+    - iptables-persistent
+  become: True
+  when:
+    - runner_deployment_type == 'docker'
 
 - name: create docker group
   group:
@@ -139,6 +160,23 @@
   when:
     - runner_deployment_type == 'docker'
 
+- name: Install gitlab-runner cli repo for Debian like distros
+  shell: "curl -s https://packages.gitlab.com/install/repositories/runner/gitlab-ci-multi-runner/script.deb.sh | sudo bash"
+  register: runner_cli_install_status
+  failed_when: false
+  changed_when: false
+  become: True
+  when:
+    - runner_deployment_type == 'docker'
+
+- name: Install gitLab-runner cli for Debian like distros
+  apt:
+    name: gitlab-ci-multi-runner
+    state: present
+  become: True
+  when:
+    - runner_deployment_type == 'docker'
+
 - block:
     - name: create a symlink to /etc/gitlab-runner
       file:
@@ -157,7 +195,7 @@
         gpgkey: https://packages.gitlab.com/runner/gitlab-ci-multi-runner/gpgkey
       become: True
 
-    - name: install GitLab runner
+    - name: install GitLab runner for RHEL-like distros
       yum:
         name: gitlab-ci-multi-runner
         state: present
